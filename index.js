@@ -30,22 +30,44 @@ const getDogPic = async () => {
     const data = await readFilePro(`${__dirname}/dog.txt`); //сохраняем результат выполнения промиса в переменную //await останавлявает код от выполнения, до получения resolve // Если промис выполнен (успешен) тогда значение выражения await - resolved значение промиса
     console.log(`Breed: ${data}`);
 
-    const res = await superagent.get(
+    const res1Pro = superagent.get(
+      //сохраняем промис в переменную
       `https://dog.ceo/api/breed/${data}/images/random`
     ); //result обработчика then
-    console.log(res.body.message); //result of the API call
+    const res2Pro = superagent.get(
+      `https://dog.ceo/api/breed/${data}/images/random`
+    );
+    const res3Pro = superagent.get(
+      `https://dog.ceo/api/breed/${data}/images/random`
+    );
 
-    await writeFilePro('dog-img.txt', res.body.message); //не сохраняем в переменную, поскольку не возвращает важного значения
+    const all = await Promise.all([res1Pro, res2Pro, res3Pro]); //сохраняем в переменную массив с промисами и передаем в промис //все три сработают одновременно и сохранится реузльтат работы всех троих в массиве all
+    const imgs = all.map((el) => el.body.message); //для того чтобы получить ссылки на картинки мы проходим мапом по массиву, передаем в мапс элемент и получаем из каждого el.body.message в строки   //result of the API call
+    console.log(imgs);
+
+    await writeFilePro('dog-img.txt', imgs.join('\n')); //не сохраняем в переменную, поскольку не возвращает важного значения //передаем для записи строку, в которую добавляем все три строки из массива imgs, разделяя при этом их на новые линии \n
     console.log('Random dog image saved to file');
   } catch (err) {
     //в случае ошибки, выход из блока try и сработает блок в catch и у него будет доступ к error-у
     console.log(err);
     throw err; //пометит целую функцию промиса как отклоненныи (rejected)
   }
-  return '2: Ready!';
+  return '2: Ready!'; //result value промиса
 };
 
-/*
+(async () => {
+  //IIFE - immediatly invoked function expression
+  try {
+    console.log('1: Will get dog pics!');
+    const x = await getDogPic(); //async function - возвращает промис
+    console.log(x);
+    console.log('3: Done getting dog pics!');
+  } catch (err) {
+    console.log('ERROR');
+  }
+})();
+
+/* //promise without async/await
 console.log('1: Will get dog pics!');
 getDogPic()
   .then((x) => {
@@ -56,7 +78,8 @@ getDogPic()
     console.log('ERROR');
   });
 */
-/*
+
+/* //promise without async/await
 readFilePro(`${__dirname}/dog.txt`) //1 промис
   .then((data) => {
     //передаем имя файла, возвращает промис. На нем используем метод then. data - то что мы вернули из промиса в случае успеха (resolve), можно дать другое имя
